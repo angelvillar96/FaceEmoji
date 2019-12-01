@@ -1,0 +1,5 @@
+
+# we dont want images
+*.png
+*.jpg
+*.jpeg

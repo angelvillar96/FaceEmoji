@@ -1,0 +1,22 @@
+name: FaceEmoji
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python==3.6.5
+  - numpy==1.13.3
+  - scipy==1.0.0
+  - matplotlib==2.0.2
+  - ipython==6.2.1
+  - jupyter==1.0.0
+  - pandas==0.22.0
+  - cython==0.28.2
+  - scikit-learn==0.19.1
+  - nbconvert==5.4.0
+  - pip
+  - pip:
+    - nbstripout==0.3.3
+    - torch==0.4.0
+    - torchvision==0.2.1
+    - opencv
