@@ -65,6 +65,7 @@ class Trainer:
 
         # ToDo
         # here we load the model
+        
 
         model_architecture = str(model)
         print("\n\n")
