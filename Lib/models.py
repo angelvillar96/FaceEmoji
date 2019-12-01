@@ -36,8 +36,3 @@ class model(nn.Module):
 
     def forward(self):
         pass
-
-
-
-
-

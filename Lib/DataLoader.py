@@ -129,4 +129,3 @@ if __name__ == '__main__':
     datadir = 'D:\MS II\III\emojies\FaceEmoji\Data\Data'
     ds = Dataset(data_dir=datadir)
     ds.get_train_validation_set()
-
