@@ -19,4 +19,4 @@ dependencies:
     - nbstripout==0.3.3
     - torch==0.4.0
     - torchvision==0.2.1
-    - opencv
+    - opencv-python
