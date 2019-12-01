@@ -1,16 +1,19 @@
 """
 This class loades the data!
 """
+import os
 
 import numpy as np
+from PIL import Image
+from scipy import misc
+from matplotlib import pyplot as plt
 import torch
 from torch.utils.data import Dataset
-import os
 from torch.utils.data.sampler import SubsetRandomSampler
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-from scipy import misc
 
+import Lib.utils as utils
 
 
 
@@ -23,19 +26,23 @@ class Dataset(Dataset):
                  , shuffle=True, batch_size=128, seed=13, debug=False):
 
         super().__init__()
-        self.data_dir = data_dir
+        self.random_seed = seed
         self.use_gpu = use_gpu
+        self.shuffle = shuffle
+        self.debug = debug
+
+        self.data_dir = data_dir
         self.train_size = train_size
         self.valid_size = valid_size
-        self.shuffle = shuffle
         self.batch_size = batch_size
-        self.random_seed = seed
-        self.dirs = None
-        self.labels = None
-        self.alllabels = None
-        self.debug = debug
+        self.file_paths = []
+        self.labels = []
+
+        self.face_crop = utils.FaceCrop(reshape=False)
+
         # reading the directories and labels!
         self.__load_dirs()
+
 
     # =====================================================================
     def __load_dirs(self):
@@ -45,21 +52,25 @@ class Dataset(Dataset):
         """
         all_labels_ = os.listdir(self.data_dir)
         labels = [label for label in all_labels_ if not '.' in label]
-        dirs = [os.listdir(os.path.join(self.data_dir, label)) for label in labels]
 
-        self.labels = []
-        self.dirs = []
-        for i, drs in enumerate(dirs):
-            self.labels += len(drs) * [labels[i]]
-            self.dirs += drs
+        file_lists = [os.listdir(os.path.join(self.data_dir, label)) for label in labels]
+
+        label_strings = []
+        files = []
+        for i, file_list in enumerate(file_lists):
+            label_strings += len(file_list) * [labels[i]]
+            files += file_list
+
+        self.file_paths = [os.path.join(self.data_dir, label_strings[i], file) for i,file in enumerate(files)]
+
 
         # changing the labels to 0 and 1!
         labels_unique = ['angry', 'blink', 'cow', 'happy', 'hat',
                          'joon', 'monkey', 'neutral', 'sunglasses',
                          'thinking']
 
-        d = [labels_unique.index(ll) for ll in self.labels]
-        self.labels = d
+        self.labels = [labels_unique.index(ll) for ll in label_strings]
+
 
 
     def __len__(self):
@@ -72,6 +83,42 @@ class Dataset(Dataset):
         return images, labels
 
 
+    def get_images_given_paths(self, paths, labels):
+        """
+        """
+
+        images = np.empty((0,224,224,3))
+        new_labels = []
+
+        # processing images in the batch
+        for i, path in enumerate(paths):
+
+            # reading image and getting face coords
+            image = np.array(Image.open(path))
+            faces = self.face_crop.crop_face_from_image(image)
+
+            # getting faces
+            face_imgs = self.face_crop.get_faces(image, faces)
+
+            # discarding if no face was found
+            if(len(face_imgs)==1):
+                try:
+                    images = np.concatenate((images, face_imgs[0][np.newaxis,:,:,:]), axis=0)
+                    new_labels.append(labels[i])
+                except:
+                    pass
+
+        while(images.shape[0]<self.batch_size):
+            images = np.concatenate((images, images[-1][np.newaxis,:,:,:]), axis=0)
+            new_labels.append(new_labels[-1])
+
+        #torch.tensor
+        images = torch.Tensor(images)
+        images = images.transpose(1,3).transpose(2,3)
+        new_labels = torch.Tensor(new_labels)
+
+        return images, new_labels
+
 
     # ======================================================
     # ======================================================
@@ -80,10 +127,13 @@ class Dataset(Dataset):
         gets the images and labels with the specified indexes
         :return:
         """
-        if not type(idx) == 'list':
-            idx = list(idx)
+        # if not type(idx) == 'list':
+            # idx = [idx]
 
-        images = np.asarray([misc.imread(self.dirs[i]) for i in idx])
+        # print(idx)
+        # images = np.asarray([misc.imread(self.file_paths[i]) for i in idx])
+        # images = np.asarray(misc.imread(self.file_paths[idx]))
+        images = np.array(Image.open(self.file_paths[idx]))
         labels = self.labels[idx]
 
         return images, labels
@@ -96,7 +146,7 @@ class Dataset(Dataset):
         Creates the train/validation split and returns the data loaders
         """
 
-        num_train = len(self.dirs)
+        num_train = len(self.file_paths)
         indices = list(range(num_train))
         split = int(np.floor(self.valid_size * num_train))
 
@@ -111,10 +161,11 @@ class Dataset(Dataset):
         valid_sampler = SubsetRandomSampler(valid_idx)
 
         # creating data loaders
-        train_loader = torch.utils.data.DataLoader(self.dirs,
+        self.pairs = list(zip(self.file_paths, self.labels))
+        train_loader = torch.utils.data.DataLoader(self.pairs,
                     batch_size=self.batch_size, sampler=train_sampler)
 
-        valid_loader = torch.utils.data.DataLoader(self.dirs,
+        valid_loader = torch.utils.data.DataLoader(self.pairs,
                         batch_size=self.batch_size, sampler=valid_sampler)
 
         self.train_examples = len(train_idx)

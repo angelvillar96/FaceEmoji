@@ -93,7 +93,6 @@ def create_experiment(output_path, output_dir, model, valid_size, learning_rate,
 
     data = {}
     data["experiment_started"] = timestamp()
-    data["dataset"] = dataset
     data["learning_rate"] = learning_rate
     data["batch_size"] = batch_size
     data["valid_size"] = valid_size

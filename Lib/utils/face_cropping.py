@@ -50,8 +50,8 @@ class FaceCrop:
         # detecting faces
         faces = self.face_cascade.detectMultiScale(img_gray,
                                                    scaleFactor=1.3,
-                                                   minNeighbors=2,
-                                                   minSize=(20, 20))
+                                                   minNeighbors=3,
+                                                   minSize=(50, 50))
         return faces
 
 

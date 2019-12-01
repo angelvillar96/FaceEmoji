@@ -19,16 +19,14 @@ import torchvision.models as Models
 # ====================================================================
 #           Classes
 
-class model(nn.Module):
+class Resnet18(nn.Module):
 
-    def __init__(self, input_dim, output_dim):
-        super(model, self).__init__()
+    def __init__(self, output_dim=10):
+        super(Resnet18, self).__init__()
 
-        self.input_dim = input_dim
         self.output_dim = output_dim
-
         self.model_layers = self.__load_pretrained_model()
-
+        return
 
 
     def __load_pretrained_model(self):
@@ -38,7 +36,7 @@ class model(nn.Module):
         """
         model_full = Models.resnet18(pretrained=True)
         all_layers = list(model_full.children())[:-1]
-        all_layers.append(nn.Linear(in_features=512, out_features=10, bias=True))
+        all_layers.append(nn.Linear(in_features=512, out_features=self.output_dim, bias=True))
         model = nn.Sequential(*all_layers)
 
         return model
@@ -51,9 +49,12 @@ class model(nn.Module):
         :return:
         """
 
-        for layer in self.model_layers:
+        for layer in self.model_layers[:-1]:
             x = layer(x)
-
+        x = x.view(-1, 512)
+        x = self.model_layers[-1](x)
 
         return x
-        
+
+
+#

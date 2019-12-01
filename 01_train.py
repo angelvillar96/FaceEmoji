@@ -15,6 +15,8 @@ import torchvision
 import torchvision.transforms as transforms
 
 import Lib.utils as utils
+import Lib.models as models
+import Lib.DataLoader as Datasets
 
 class Trainer:
 
@@ -25,22 +27,24 @@ class Trainer:
 
         # training parameters
         self.learning_rate = 0.001
-        self.batch_size = 128
+        self.batch_size = 32
         self.max_epochs = 10
         self.valid_size = 0.1
         self.save_frequency = 2
 
+        self.loss_over_epochs = []
+
         # relevant paths
         self.root = os.getcwd()
-        self.datapath = os.path.join(self.root, "Data")
+        self.data_path = os.path.join(self.root, "Data")
         self.output_dir = 'model_%s_valid-size_%.2f_lr_%.5f_b_%d' % \
-            (model, self.valid_size, self.learning_rate, self.batch_size)
+            ("resnet18", self.valid_size, self.learning_rate, self.batch_size)
         self.output_path = os.path.join(os.getcwd(), "experiments", self.output_dir + '_' +
                                    utils.timestamp())
-        dir_existed = utils.create_directory(output_path)
+        dir_existed = utils.create_directory(self.output_path)
 
         # creating the experiment file with metadata and so on
-        self.filepath = utils.create_experiment(self.output_path, model="resnet", valid_size=self.valid_size,
+        self.filepath = utils.create_experiment(self.output_path, self.output_dir, model="resnet18", valid_size=self.valid_size,
                                                 learning_rate=self.learning_rate, batch_size=self.batch_size,
                                                 max_epochs=self.max_epochs)
 
@@ -52,25 +56,25 @@ class Trainer:
         """
 
         # fetching the dataset
-        self.dataset = Dataset(data_path=self.data_path, use_gpu=True, dataset=self.dataset,
-                               train=True, debug=self.debug, valid_size=self.valid_size,
-                               batch_size=self.batch_size, shuffle=True)
+        self.dataset = Datasets.Dataset(data_dir=self.data_path, use_gpu=True,
+                               valid_size=self.valid_size, batch_size=self.batch_size, shuffle=True)
 
         self.train_loader, self.valid_loader = self.dataset.get_train_validation_set()
 
         # setting up device
         torch.backends.cudnn.fastest = True
-        torch.cuda.device(cuda_device_id)
+        torch.cuda.device(6)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
         # ToDo
         # here we load the model
-        
+        self.model = models.Resnet18(output_dim=10)
+        self.model =  self.model.to(self.device)
 
-        model_architecture = str(model)
+        model_architecture = str(self.model)
         print("\n\n")
-        print(f"NETWORK STRUCTURE: {self.model_type}\n")
-        print(model)
+        print(f"NETWORK STRUCTURE: resnet18\n")
+        print(self.model)
         print("\n\n")
 
          # setting up model parameters
@@ -130,10 +134,13 @@ class Trainer:
         print('Step Train No: {}'.format(str(epoch+1)))
 
         # iterate batch by bacth over the train loader
-        for i, (images, labels) in enumerate(self.train_loader):
+        for i, (paths, labels) in enumerate(self.train_loader):
+
+            images, labels = self.dataset.get_images_given_paths(paths, labels)
 
             images = images.to(self.device)
             labels = labels.to(self.device)
+            labels = labels.long()
 
             # reseting the gradients
             self.optimizer.zero_grad()
@@ -150,9 +157,12 @@ class Trainer:
             self.optimizer.step()
 
             # computing accuracy on the training set
-            outputs = outputs.cpu().detach().numpy()
-            predicted_labels = label_list[np.argmax(outputs, axis=1)]
+            outputs = outputs.cpu()
+            predicted_labels = torch.argmax(outputs, axis=1)
             accuracy_on_labels += len(np.where(predicted_labels == labels.cpu())[0])
+
+            if(i%5==0):
+                print(f"Processing batch {i} of {len(self.train_loader)}")
 
         #Saving the model every 25 epochs
         if(epoch % self.save_frequency == 0):
@@ -187,28 +197,32 @@ class Trainer:
 
         img_list = []
         accuracy_on_labels = 0
-        label_list = self.dataset.labels
+        label_list = np.array(self.dataset.labels)
 
         print('Step Valid. No: {}'.format(str(epoch+1)))
 
         with torch.no_grad():
             loss_list = []
-            for i, (images, labels) in enumerate(self.valid_loader):
+            for i, (paths, labels) in enumerate(self.valid_loader):
+
+                images, labels = self.dataset.get_images_given_paths(paths, labels)
 
                 images = images.to(self.device)
                 labels = labels.to(self.device)
+                labels = labels.long()
 
                 outputs = self.model(images)
                 outputs = outputs.double()
 
-                loss_list.append( self.loss_function(input=outputs, target=labels) )
+                loss_list.append( self.loss_function(input=outputs, target=labels.long()) )
 
                 # computing accuracy on the test set
-                outputs = outputs.cpu().detach().numpy()
-                predicted_labels = label_list[np.argmax(outputs, axis=1)]
+                outputs = outputs.cpu()
+                # predicted_labels = label_list[np.argmax(outputs, axis=1)]
+                predicted_labels = torch.argmax(outputs, axis=1)
                 accuracy_on_labels += len(np.where(predicted_labels == labels.cpu())[0])
 
-                if (i==0 and self.debug):
+                if (i==0):
                     image = images[0:6].cpu().numpy()
                     image = np.transpose(image,(0,2,3,1))
                     output = outputs[0:6]

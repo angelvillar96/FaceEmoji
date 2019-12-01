@@ -11,6 +11,7 @@ import cv2 as cv
 from PIL import Image
 
 import Lib.utils as utils
+from predict import Test as Predict
 
 
 def main():
@@ -19,22 +20,25 @@ def main():
     cam = cv.VideoCapture(0)
     cv.namedWindow("Test Face Cropping")
 
-    # initalizng face cropper
-    face_crop = utils.FaceCrop()
+    # defining predictor
+    predictor = Predict()
+    predictor.setup_trained_model()
 
     # main loop
     while True:
 
         # taking image and processing it
         ret, frame = cam.read()
-        faces = face_crop.crop_face_from_image(frame)
 
-        # getting faces
-        face_crop.get_faces(frame, faces)
+        labels, faces = predictor.inference(frame)
 
-        # Draw rectangle around the faces
-        for (x, y, w, h) in faces:
+        for i in range(len(labels)):
+            (x, y, w, h) = faces[i]
+            emoji = get_emoji(labels[i], x, y, w, h)
+            frame[y:y+h, x:x+w] = emoji
+
             cv.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
+            cv.putText(frame, labels[i], (x, y-10), cv.FONT_HERSHEY_SIMPLEX, 0.9, (0,0,255), 2)
 
         cv.imshow("Test Face Cropping", frame)
         if not ret:
@@ -52,33 +56,24 @@ def main():
     cv.destroyAllWindows()
 
 
-def main2():
+def get_emoji(label, x, y, w, h):
 
-    path = os.path.join(os.getcwd(),"Data","sunglasses","1 (13).png")
-    img = np.array(Image.open(path))
+    path = os.path.join(os.getcwd(),"emojies",label+".png")
+    size = (h,w)
+    img = Image.open(path)
+    img = img.resize(size, Image.ANTIALIAS)
+    img = np.array(img)[:,:,0:3]
 
-    plt.figure()
-    plt.imshow(img)
+    emoji = np.copy(img)
+    emoji[:,:,0] = img[:,:,2]
+    emoji[:,:,2] = img[:,:,0]
 
-    #initalizng face cropper
-    face_crop = utils.FaceCrop(reshape=False)
-
-    # getting faces coords
-    faces = face_crop.crop_face_from_image(img)
-
-    # getting faces
-    face_imgs = face_crop.get_faces(img, faces)
-
-    plt.figure()
-    plt.imshow(face_imgs[0])
-
-    plt.show()
+    return emoji
 
 
 if __name__ == "__main__":
 
     main()
-    #main2()
 
 
 #

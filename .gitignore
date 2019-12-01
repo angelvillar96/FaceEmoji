@@ -3,7 +3,10 @@
 *.png
 *.jpg
 *.jpeg
+
+# others
+.ftpconfig
+
 # we don't want pycharm stuff
 .idea/
 .idea
-
