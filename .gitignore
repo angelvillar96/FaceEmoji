@@ -3,3 +3,7 @@
 *.png
 *.jpg
 *.jpeg
+# we don't want pycharm stuff
+.idea/
+.idea
+
