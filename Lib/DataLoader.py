@@ -39,6 +39,10 @@ class Dataset(Dataset):
 
     # =====================================================================
     def __load_dirs(self):
+        """
+        loads all labels and directories!
+        :return:
+        """
         all_labels_ = os.listdir(self.data_dir)
         labels = [label for label in all_labels_ if not '.' in label]
         dirs = [os.listdir(os.path.join(self.data_dir, label)) for label in labels]
@@ -49,6 +53,13 @@ class Dataset(Dataset):
             self.labels += len(drs) * [labels[i]]
             self.dirs += drs
 
+        # changing the labels to 0 and 1!
+        labels_unique = ['angry', 'blink', 'cow', 'happy', 'hat',
+                         'joon', 'monkey', 'neutral', 'sunglasses',
+                         'thinking']
+
+        d = [labels_unique.index(ll) for ll in self.labels]
+        self.labels = d
 
 
     def __len__(self):
@@ -66,7 +77,7 @@ class Dataset(Dataset):
     # ======================================================
     def __get_images_and_labels(self, idx):
         """
-        gets the images with the indexes
+        gets the images and labels with the specified indexes
         :return:
         """
         if not type(idx) == 'list':
@@ -123,6 +134,7 @@ class Dataset(Dataset):
     # ========================================================================
     def get_test_set(self):
         pass
+
 
 if __name__ == '__main__':
 
