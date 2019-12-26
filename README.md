@@ -3,6 +3,8 @@
 
 This project uses image processing techniques to perform face detection and deep learning in order to replace the faces by an emoji similar to the detected facial expression.
 
+The 10 emojis used can be found in this repository under the */emojies* directory
+
 ## Getting Started
 
 To get this repository, fork this repository or clone it using the following command:
@@ -23,7 +25,7 @@ $ activate FaceEmoji
 *__Note__:* This step might take a few minutes
 
 
-## Contents
+## Contents and Pipeline
 
 ### Face Detection
 
@@ -40,3 +42,46 @@ On the one hand, the convolutional part of the network, which performs feature e
 On the other hand,  the fully-connected part, which performs classification, has been modified. The last fully-connected layer was replaced for a new layer tailormade for our purpose.
 
 ### Dataset
+
+Labeled images that map facial expressions or facial features to emoji labels are necessary to retrain the network during the transfer learning procedure. Therefore, we have created ourselves a mini-dataset containing (approximately) 200 images for each class.   
+
+The images were taken using the python scrip *testTakeImages.py* included in the directory */Lib/utils*. After being run, this script takes an image every 500ms and saves it into a directory specified by the user as command line argument.
+
+
+### Training
+
+The networks was retrained for 10 epochs using the ADAM optimizer and an initial learning rate of 0.001.
+
+In just ten epochs, the loss (Binary Cross Entropy) decreases from 0.3 to just 0.05, while the accuracy increases to above 95%.
+
+
+## Performance
+
+On static images, the network performs inference with a quite high accuracy. A comprehensible evaluatiion has not been carried out, but hopefully the following image is convincing.
+
+<p align="center">
+  <img src="/readme_images/inference.png" width="450">
+</p>
+
+## Real Time Inference
+
+The script *test_face_cropping.py* runs the algorithm in real time. Using an openCV canvas:
+
+- Takes an image
+- Crops the faces
+- Uses the Deep Learning Model to predict an emoji
+- Replaces the face by the emoji
+
+
+<p align="center">
+  <img src="/readme_images/cow.png" width="180">
+  <img src="/readme_images/happy.png" width="180">
+  <img src="/readme_images/kiss.png" width="180">
+  <img src="/readme_images/tongue.png" width="180">
+</p>
+
+![Recordit GIF](my_gif.gif)
+
+### Problems
+
+The fact that the dataset used was created by us and not so large makes the network perform suboptimally. Furthermore, some emojies such as the monkey or crying are not easy to be detected as the face needs to be partially covered, thus making the performance of the face detector worse.
