@@ -1,8 +1,8 @@
 
-# we dont want images
-*.png
-*.jpg
-*.jpeg
+# we dont want Data Folder
+Data
+Lib/utils/test
+outputs
 
 # others
 .ftpconfig
