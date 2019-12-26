@@ -6,6 +6,7 @@
 
 # others
 .ftpconfig
+*.pyc
 
 # we don't want pycharm stuff
 .idea/
