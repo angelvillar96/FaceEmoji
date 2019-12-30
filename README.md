@@ -7,7 +7,7 @@ The 10 emojis used can be found in this repository under the */emojies* director
 
 ## Getting Started
 
-To get this repository, fork this repository or clone it using the following command:
+To get the code, fork this repository or clone it using the following command:
 
 >git clone https://github.com/angelvillar96/FaceEmoji.git
 
@@ -35,7 +35,7 @@ In order to perform face detection, a cascade classifier from openCV has been us
 
 The deep learning part of the project has been developed using the PyTorch Library. The *emotion detection* has been preformed using a Resnet18 model (see https://arxiv.org/pdf/1512.03385.pdf for further information about Residual networks). The model used was pretrained on the ImageNet dataset containing over 1000000 images.
 
-In order to adapt this model to our particular task, traser learning has been applied.
+In order to adapt this model to our particular task, transfer learning has been applied.
 
 On the one hand, the convolutional part of the network, which performs feature extraction, has been kept.
 
@@ -45,7 +45,15 @@ On the other hand,  the fully-connected part, which performs classification, has
 
 Labeled images that map facial expressions or facial features to emoji labels are necessary to retrain the network during the transfer learning procedure. Therefore, we have created ourselves a mini-dataset containing (approximately) 200 images for each class.   
 
-The images were taken using the python scrip *testTakeImages.py* included in the directory */Lib/utils*. After being run, this script takes an image every 500ms and saves it into a directory specified by the user as command line argument.
+The images were taken using the python scrip *testTakeImages.py* included in the directory */Lib/utils*. After being run, this script takes an image every 500ms and saves it into a directory specified by the user as command line argument. For example, the following commands start taking images and saving them into a directory named */happy*
+
+```shell
+$ python testTakeImages.py --emoji happy
+$ python testTakeImages.py -e happy
+```
+
+For privacy issues, we do not make our dataset public, but the model state dictionaries of our trained models can be found under the directory */experiments/-/models*.
+
 
 
 ### Training
@@ -57,7 +65,7 @@ In just ten epochs, the loss (Binary Cross Entropy) decreases from 0.3 to just 0
 
 ## Performance
 
-On static images, the network performs inference with a quite high accuracy. A comprehensible evaluatiion has not been carried out, but hopefully the following image is convincing.
+On static images, the network performs inference with a quite high accuracy. A comprehensible evaluatiion has not been carried out, but hopefully the following image is convincing: we can see how for the 6 images the network predicts the correct label.
 
 <p align="center">
   <img src="/readme_images/inference.png" width="450">
