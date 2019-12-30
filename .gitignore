@@ -13,3 +13,4 @@ predict_real_time.py
 # we don't want pycharm stuff
 .idea/
 .idea
+__pycache__/
